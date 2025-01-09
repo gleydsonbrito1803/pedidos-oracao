@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedidos de Oração</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #4caf50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+        header nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 18px;
+        }
+        header nav a:hover {
+            text-decoration: underline;
+        }
+        main {
+            padding: 20px;
+        }
+        .section {
+            padding: 20px;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        .active {
+            display: block;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-top: 10px;
+            color: white;
+            background-color: #4caf50;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            text-align: center;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        form input, form textarea, form select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #telaOracao {
+            background: url('https://via.placeholder.com/800x600.png?text=Imagem+de+um+Ter%C3%A7o') no-repeat center center;
+            background-size: cover;
+            padding: 20px;
+            border-radius: 8px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Pedidos de Oração</h1>
+        <nav>
+            <a href="#inicio" onclick="mostrarSecao('inicio')">Início</a>
+            <a href="#compartilhe" onclick="mostrarSecao('compartilhe')">Compartilhe seu Pedido</a>
+            <a href="#pedidos" onclick="mostrarSecao('pedidos')">Pedidos de Oração</a>
+            <a href="#reza" onclick="mostrarSecao('reza')">Rezar</a>
+            <a href="#doacoes" onclick="mostrarSecao('doacoes')">Doações</a>
+        </nav>
+    </header>
+    <main>
+        <!-- Tela Inicial -->
+        <section id="inicio" class="section active">
+            <h2>Bem-vindo ao nosso site de pedidos de oração</h2>
+            <p>Aqui você pode compartilhar seus pedidos de oração, orar por outras pessoas e contribuir para uma comunidade de fé e esperança.</p>
+        </section>
+
+        <!-- Formulário para enviar pedido de oração -->
+        <section id="compartilhe" class="section">
+            <h2>Compartilhe seu pedido</h2>
+            <form id="pedidoForm">
+                <input type="text" id="nome" placeholder="Seu nome" required>
+                <textarea id="situacao" rows="4" placeholder="Descreva sua situação" required></textarea>
+                <button type="submit" class="btn">Enviar Pedido</button>
+            </form>
+        </section>
+
+        <!-- Lista de pedidos -->
+        <section id="pedidos" class="section">
+            <h2>Pedidos de Oração</h2>
+            <div class="contador">
+                Total de pedidos: <span id="contadorPedidos">0</span>
+            </div>
+            <div id="listaPedidos"></div>
+        </section>
+
+        <!-- Tela de oração -->
+        <section id="reza" class="section">
+            <h2 id="pedidoTitulo">Orando por...</h2>
+            <p id="pedidoDescricao"></p>
+            <label for="tempoOracao">Escolha o tempo para sua oração (minutos):</label>
+            <select id="tempoOracao">
+                <option value="">Selecione</option>
+                <option value="1">1 minuto</option>
+                <option value="2">2 minutos</option>
+                <option value="5">5 minutos</option>
+                <option value="10">10 minutos</option>
+            </select>
+            <div id="timer">Selecione um tempo e clique em "Iniciar Cronômetro"</div>
+            <button class="btn" onclick="iniciarCronometro()">Iniciar Cronômetro</button>
+            <button class="btn" id="botaoTerminar">Terminar Oração</button>
+        </section>
+
+        <!-- Doações -->
+        <section id="doacoes" class="section">
+            <h2>Contribua com nossa missão</h2>
+            <p>Sua doação ajuda a manter este site ativo e a alcançar mais pessoas em necessidade de oração.</p>
+            <p><strong>PIX:</strong> seu-pix-aqui@example.com</p>
+        </section>
+    </main>
+
+    <script>
+        const pedidos = JSON.parse(localStorage.getItem('pedidos')) || [];
+        const listaPedidos = document.getElementById('listaPedidos');
+        const pedidoForm = document.getElementById('pedidoForm');
+        const pedidoTitulo = document.getElementById('pedidoTitulo');
+        const pedidoDescricao = document.getElementById('pedidoDescricao');
+        const timerElement = document.getElementById('timer');
+        const tempoOracao = document.getElementById('tempoOracao');
+        const botaoTerminar = document.getElementById('botaoTerminar');
+        const contadorPedidos = document.getElementById('contadorPedidos');
+
+        let pedidoAtualIndex = null;
+        let timer;
+
+        function salvarPedidos() {
+            localStorage.setItem('pedidos', JSON.stringify(pedidos));
+        }
+
+        function mostrarSecao(secaoId) {
+            document.querySelectorAll('.section').forEach(secao => {
+                secao.classList.remove('active');
+            });
+            document.getElementById(secaoId).classList.add('active');
+        }
+
+        function atualizarLista() {
+            listaPedidos.innerHTML = '';
+            pedidos.forEach((pedido, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <h3>${pedido.nome}</h3>
+                    <p>${pedido.situacao}</p>
+                    <div>Pessoas que oraram: <span id="contadorOracoes${index}">${pedido.contador}</span></div>
+                    <button class="btn" onclick="iniciarOracao(${index})">Orar Agora</button>
+                `;
+                listaPedidos.appendChild(card);
+            });
+            contadorPedidos.textContent = pedidos.length;
+        }
+
+        pedidoForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const nome = document.getElementById('nome').value;
+            const situacao = document.getElementById('situacao').value;
+            pedidos.push({ nome, situacao, contador: 0 });
+            salvarPedidos();
+            atualizarLista();
+            pedidoForm.reset();
+        });
+
+        function iniciarOracao(index) {
+            pedidoAtualIndex = index;
+            const pedido = pedidos[index];
+            pedidoTitulo.textContent = `Orando por ${pedido.nome}`;
+            pedidoDescricao.textContent = pedido.situacao;
+            tempoOracao.value = ''; // Resetar seleção de tempo
+            timerElement.textContent = 'Selecione um tempo e clique em "Iniciar Cronômetro"';
+            mostrarSecao('reza');
+        }
+
+        function atualizarTimer(segundos) {
+            const minutos = Math.floor(segundos / 60);
+            const segundosRestantes = segundos % 60;
+            timerElement.textContent = `${minutos} minutos e ${segundosRestantes} segundos restantes`;
+        }
+
+        function atualizarContador(index) {
+            const contadorElemento = document.getElementById(`contadorOracoes${index}`);
+            if (contadorElemento) {
+                contadorElemento.textContent = pedidos[index].contador;
+            }
+        }
+
+        function iniciarCronometro() {
+            const tempoEscolhido = parseInt(tempoOracao.value);
+            if (isNaN(tempoEscolhido) || tempoEscolhido <= 0) {
+                alert('Por favor, escolha um tempo válido para iniciar a oração!');
+                return;
+            }
+
+            let segundosRestantes = tempoEscolhido * 60;
+            atualizarTimer(segundosRestantes);
+
+            timer = setInterval(() => {
+                segundosRestantes--;
+                if (segundosRestantes <= 0) {
+                    clearInterval(timer);
+                    alert('Tempo de oração concluído!');
+                    concluirOracao();
+                } else {
+                    atualizarTimer(segundosRestantes);
+                }
+            }, 1000);
+        }
+
+        function concluirOracao() {
+            if (pedidoAtualIndex !== null) {
+                pedidos[pedidoAtualIndex].contador++;
+                salvarPedidos();
+                atualizarContador(pedidoAtualIndex);
+            }
+            mostrarSecao('pedidos');
+        }
+
+        botaoTerminar.addEventListener('click', () => {
+            if (timer) {
+                clearInterval(timer);
+                alert('Você encerrou a oração antes do tempo!');
+            }
+            concluirOracao();
+        });
+
+        // Inicialização da página
+        document.addEventListener('DOMContentLoaded', () => {
+            atualizarLista();
+        });
+    </script>
+</body>
+</html>
